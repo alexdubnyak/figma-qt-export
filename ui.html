@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Qt UI Export</title>
+  <style>
+    body    { font: 13px/1.4 sans-serif; margin: 16px; }
+    button  { padding: 6px 14px; font-size: 13px; }
+    #status { margin-top: 12px; white-space: pre-wrap; }
+    a.dl    { display: block; margin-top: 8px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+
+  <button id="exportBtn">Export Qt UI</button>
+  <div id="status"></div>
+
+  <script>
+    const status = document.getElementById('status');
+
+    document.getElementById('exportBtn').onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'export' } }, '*');
+      status.textContent = '⏳ Экспорт...';
+    };
+
+    window.onmessage = async (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg || msg.type !== 'files' || typeof msg.files !== 'object') return;
+
+      const files = msg.files;
+      const zip = new JSZip();
+
+      console.log('📦 Полученные файлы:', files);
+
+      // Только строковые ключи — избегаем символов и плохих объектов
+      for (const [key, val] of Object.entries(files)) {
+        if (typeof key === 'string') {
+          try {
+            zip.file(key, String(val));
+          } catch (e) {
+            console.warn('⚠️ Не удалось добавить файл:', key, e);
+          }
+        } else {
+          console.warn('🚫 Символ или нестроковой ключ пропущен:', key);
+        }
+      }
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+
+      status.innerHTML = '✅ Файлы готовы.';
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'qt-ui-export.zip';
+      a.className = 'dl';
+      a.textContent = '📦 Скачать ZIP';
+      status.appendChild(a);
+    };
+  </script>
+</body>
+</html>

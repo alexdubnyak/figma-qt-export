@@ -1,0 +1,8 @@
+{
+  "name": "Qt UI Export",
+  "id": "qt-ui-export",
+  "api": "1.0.0",
+  "editorType": ["figma"],
+  "main": "code.js",
+  "ui": "ui.html"
+}
